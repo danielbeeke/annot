@@ -1,0 +1,27 @@
+annot-text {
+  position: relative;
+  display: block;
+}
+
+annot-cursor {
+  position: absolute;
+  display: block;
+  height: 40px;
+  transform: translate(-50%, -50%);
+  border-left: 2px solid blue;
+}
+
+annot-highlight {
+  position: relative;
+  display: block;
+
+  .highlights {
+    position: relative;
+  }
+
+  .highlight {
+    display: block;
+    position: absolute;
+    background-color: red;
+  }
+}
