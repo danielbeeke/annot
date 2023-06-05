@@ -1,10 +1,6 @@
-import { iterateNode } from './helpers/iterateNode'
-
-type Highlight = [string, number, number]
-
 export class AnnotHighlight extends HTMLElement {
 
-  #highlights: Set<Highlight> = new Set()
+  #highlights: Set<[number, number]> = new Set()
   #highlightsWrapper: HTMLDivElement
 
   constructor () {
@@ -19,50 +15,69 @@ export class AnnotHighlight extends HTMLElement {
     this.render()
   }
 
-  addHighlight (text: string, startWord: number, endWord: number) {
-    this.#highlights.add([text, startWord, endWord])
+  addHighlight (startWord: number, endWord: number) {
+    this.#highlights.add([startWord, endWord])
     this.render()
   }
 
   render () {
     for (const child of this.#highlightsWrapper.children) child.remove()
-    for (const highlight of this.#highlights.values()) this.findAndDrawHighlight(highlight)
+    for (const highlight of this.#highlights.values()) this.findAndDrawHighlight(...highlight)
   }
 
-  findAndDrawHighlight (highlightTuple: Highlight) {
-    const [highlight, start, end] = highlightTuple
-    let range = new Range()
-    let regex = RegExp(highlight, 'g')
-    let match
-
+  findAndDrawHighlight (start: number, end: number) {
+    const text = this.querySelector('annot-text') as Node
+    
     const selection = window.getSelection()!
     selection.removeAllRanges()
 
-    while (match = regex.exec(this.textContent!)) {
-      let it = iterateNode(this)
-      let currentIndex = 0
-      let result = it.next()
+    const range = new Range()
+    range.setStart(text, 0)
+    range.setEnd(text, 0)
 
-      while (!result.done) {
-        if (match.index >= currentIndex && match.index < currentIndex + result.value.length) {
-          range = new Range()
-          range.setStart(result.value, match.index - currentIndex)
-        }
+    selection.addRange(range)
 
-        if (match.index + highlight.length >= currentIndex && match.index + highlight.length < currentIndex + result.value.length) {
-          range.setEnd(result.value, match.index + highlight.length - currentIndex)
-          selection.addRange(range)
-          this.drawHighlights(range.getClientRects())
-        }
-        
-        currentIndex += result.value.length
-        result = it.next()
-      }
+    /** @ts-ignore */
+    const isChromium = !!window.chrome
+
+    const words = text.textContent!.trim().split(/ |\,|\./g)
+
+    let realWordIndex = -1
+
+    for (const word of words) {
+      if (word !== '') realWordIndex++
+      if (word === '' && !isChromium) continue
+      if (realWordIndex === start) break
+      selection.modify('move', 'forward', 'word')
     }
 
-    console.log(selection.toString())
+    selection.modify('move', 'forward', 'word')    
+    selection.modify('move', 'backward', 'word')
+
+    realWordIndex = -1
+
+    for (const word of words) {
+      if (word !== '') realWordIndex++
+      if (realWordIndex < start - 1) continue
+      if (word === '' && !isChromium) continue
+      if (realWordIndex === end) break
+      selection.modify('extend', 'forward', 'word')
+    }
+
+    const testRange = selection.getRangeAt(0)
+    const testRangeText = testRange.toString();
+
+    const isLetter = /^[a-z]/i.test(testRangeText[testRangeText.length - 1])
+
+    if (!isLetter) {
+      selection.modify('extend', 'backward', 'character')    
+    }
+
+    const currentRange = selection.getRangeAt(0)
 
     selection.removeAllRanges()
+
+    this.drawHighlights(currentRange.getClientRects())
   }
 
   drawHighlights (rects: DOMRectList) {

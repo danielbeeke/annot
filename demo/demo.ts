@@ -7,10 +7,10 @@ import type { AnnotHighlight } from '../lib/AnnotHighlight'
 const annotText = document.querySelector('annot-text')! as AnnotText
 const annotHighlight = document.querySelector('annot-highlight')! as AnnotHighlight
 
-annotHighlight.addHighlight('Lorem', 6, 6)
-
 annotText.addEventListener('selection', (event: any) => {
-  const text = event.detail.text
-  annotHighlight.addHighlight(text, 6, 6)
+  const start = event.detail.start
+  const end = event.detail.end
+
+  annotHighlight.addHighlight(start, end)
   annotText.clearCursors()
 })
