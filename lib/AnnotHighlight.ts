@@ -1,6 +1,6 @@
 export class AnnotHighlight extends HTMLElement {
 
-  #highlights: Set<[number, number]> = new Set()
+  #highlights: Map<string, [number, number, string | undefined]> = new Map()
   #highlightsWrapper: HTMLDivElement
 
   constructor () {
@@ -15,17 +15,22 @@ export class AnnotHighlight extends HTMLElement {
     this.render()
   }
 
-  addHighlight (startWord: number, endWord: number) {
-    this.#highlights.add([startWord, endWord])
+  addHighlight (startWord: number, endWord: number, className?: string) {
+    this.#highlights.set(startWord + '-' + endWord, [startWord, endWord, className])
+    this.render()
+  }
+
+  removeHighlight (startWord: number, endWord: number) {
+    this.#highlights.delete(startWord + '-' + endWord)
     this.render()
   }
 
   render () {
-    for (const child of this.#highlightsWrapper.children) child.remove()
+    if (this.#highlightsWrapper.children) this.#highlightsWrapper.innerHTML = ''
     for (const highlight of this.#highlights.values()) this.findAndDrawHighlight(...highlight)
   }
 
-  findAndDrawHighlight (start: number, end: number) {
+  findAndDrawHighlight (start: number, end: number, className: string | undefined) {
     const text = this.querySelector('annot-text') as Node
     
     const selection = window.getSelection()!
@@ -37,8 +42,7 @@ export class AnnotHighlight extends HTMLElement {
 
     selection.addRange(range)
 
-    /** @ts-ignore */
-    const isChromium = !!window.chrome
+    const isChromium = !!(window as any).chrome
 
     const words = text.textContent!.trim().split(/ |\,|\./g)
 
@@ -77,16 +81,22 @@ export class AnnotHighlight extends HTMLElement {
 
     selection.removeAllRanges()
 
-    this.drawHighlights(currentRange.getClientRects())
+    this.drawHighlights(currentRange.getClientRects(), start, end, className)
   }
 
-  drawHighlights (rects: DOMRectList) {
+  drawHighlights (rects: DOMRectList, start: number, end: number, className: string | undefined) {
     const ownRect = this.getBoundingClientRect()
+    const rectsArray = [...rects]
 
-    for (const rect of rects) {
+    const highlightWrapper = document.createElement('div')
+    highlightWrapper.classList.add('highlight-group')
+    this.#highlightsWrapper.appendChild(highlightWrapper)
+
+    for (const [index, rect] of rectsArray.entries()) {
       const highlight = document.createElement('div')
       highlight.classList.add('highlight')
-      this.#highlightsWrapper.appendChild(highlight)
+      if (className) highlight.classList.add(className)
+      highlightWrapper.appendChild(highlight)
 
       const marginTop = ownRect.top
       const marginLeft = ownRect.left
@@ -95,6 +105,15 @@ export class AnnotHighlight extends HTMLElement {
       highlight.style.left = rect.x - marginLeft + 'px'
       highlight.style.height = rect.height + 'px'
       highlight.style.width = rect.width + 'px'
+
+      let type = 'middle'
+
+      if (index === 0) type = 'start'
+      if (index === rectsArray.length - 1) type = 'end'
+
+      this.dispatchEvent(new CustomEvent('draw-highlight', {
+        detail: { element: highlight, type, start, end }
+      }))
     }
   }
 }

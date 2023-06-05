@@ -1,5 +1,4 @@
 annot-text {
-  position: relative;
   display: block;
 }
 
@@ -22,6 +21,11 @@ annot-highlight {
   .highlight {
     display: block;
     position: absolute;
-    background-color: red;
+    z-index: -1;
+    background-color: rgb(226, 185, 185);
+  }
+
+  .highlight-group:hover .highlight {
+    background-color: rgb(165, 80, 80);
   }
 }
