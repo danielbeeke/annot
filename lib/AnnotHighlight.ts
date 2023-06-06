@@ -44,7 +44,7 @@ export class AnnotHighlight extends HTMLElement {
 
     const isChromium = !!(window as any).chrome
 
-    const words = text.textContent!.trim().split(/ |\,|\./g)
+    const words = this.textContent!.trim().split(/ |\,|\./g)
 
     let realWordIndex = -1
 
@@ -81,10 +81,10 @@ export class AnnotHighlight extends HTMLElement {
 
     selection.removeAllRanges()
 
-    this.drawHighlights(currentRange.getClientRects(), start, end, className)
+    this.drawHighlights(currentRange.getClientRects(), start, end, currentRange.toString(), className)
   }
 
-  drawHighlights (rects: DOMRectList, start: number, end: number, className: string | undefined) {
+  drawHighlights (rects: DOMRectList, start: number, end: number, text: string, className: string | undefined) {
     const ownRect = this.getBoundingClientRect()
     const rectsArray = [...rects]
 
@@ -98,6 +98,10 @@ export class AnnotHighlight extends HTMLElement {
       if (className) highlight.classList.add(className)
       highlightWrapper.appendChild(highlight)
 
+      const highlightHover = document.createElement('div')
+      highlightHover.classList.add('highlight-hover')
+      highlightWrapper.appendChild(highlightHover)
+
       const marginTop = ownRect.top
       const marginLeft = ownRect.left
 
@@ -105,6 +109,18 @@ export class AnnotHighlight extends HTMLElement {
       highlight.style.left = rect.x - marginLeft + 'px'
       highlight.style.height = rect.height + 'px'
       highlight.style.width = rect.width + 'px'
+
+
+      highlightHover.style.top = rect.y - marginTop + 'px'
+      highlightHover.style.left = rect.x - marginLeft + 'px'
+      highlightHover.style.height = rect.height + 'px'
+      highlightHover.style.width = rect.width + 'px'
+
+      highlightHover.addEventListener('click', () => {
+        this.dispatchEvent(new CustomEvent('click-highlight', {
+          detail: { element: highlight, type, start, end, text }
+        }))
+      })
 
       let type = 'middle'
 
@@ -114,7 +130,26 @@ export class AnnotHighlight extends HTMLElement {
       this.dispatchEvent(new CustomEvent('draw-highlight', {
         detail: { element: highlight, type, start, end }
       }))
+
+      const isRemovable = this.getAttribute('removable') !== null
+      if (isRemovable && type === 'end') this.addRemoveButton(highlight, start, end)
     }
+  }
+
+  addRemoveButton (element: HTMLDivElement, start: number, end: number) {
+    const removeButton = document.createElement('button')
+    removeButton.innerHTML = 'x'
+    removeButton.classList.add('remove-button')
+    const rect = element.getBoundingClientRect()
+
+    removeButton.style.top = rect.y + 'px'
+    removeButton.style.left = rect.x + rect.width + 'px'
+
+    element.parentElement!.appendChild(removeButton)
+
+    removeButton.addEventListener('click', () => {
+      this.removeHighlight(start, end)
+    })
   }
 }
 

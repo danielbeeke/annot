@@ -1,13 +1,14 @@
 annot-text {
-  display: block;
+  display: inline;
+  line-height: 26px;
 }
 
 annot-cursor {
   position: absolute;
   display: block;
-  height: 40px;
+  height: 30px;
   transform: translate(-50%, -50%);
-  border-left: 2px solid blue;
+  border-left: 3px solid rgb(124, 124, 201);
 }
 
 annot-highlight {
@@ -19,13 +20,50 @@ annot-highlight {
   }
 
   .highlight {
+    --paddingH: 3px;
+    --paddingV: 2px;
+    --negativePaddingH: calc(var(--paddingH) * -1);
+    --negativePaddingV: calc(var(--paddingV) * -1);
+    border-radius: 4px;
     display: block;
     position: absolute;
     z-index: -1;
+    padding: var(--paddingV) var(--paddingH);
+    transform: translate(var(--negativePaddingH), var(--negativePaddingV));
     background-color: rgb(226, 185, 185);
   }
 
-  .highlight-group:hover .highlight {
-    background-color: rgb(165, 80, 80);
+  .highlight-hover {
+    display: block;
+    position: absolute;
+    z-index: 10;
+  }
+
+  .highlight-group {
+    .remove-button {
+      opacity: 0;
+      cursor: pointer;
+      position: absolute;
+      transform: translate(-100%, -100%);
+      z-index: 1000;
+      display: block;
+      border: none;
+      width: 22px;
+      height: 22px;
+      text-align: center;
+      line-height: 22px;
+      border-radius: 50%;
+      padding: 0;
+    }
+
+    &:hover {
+      .highlight {
+        background-color: rgb(165, 80, 80);
+      }
+
+      .remove-button {
+        opacity: 1;
+      }
+    }
   }
 }
