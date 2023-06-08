@@ -11,7 +11,7 @@ export class AnnotHighlight extends HTMLElement {
     this.#highlightsWrapper.classList.add('highlights')
 
     const originalRender = this.render.bind(this)
-    this.render = _.debounce(originalRender, 100)
+    this.render = _.debounce(originalRender, 40)
   }
 
   connectedCallback () {
@@ -30,12 +30,41 @@ export class AnnotHighlight extends HTMLElement {
     this.render()
   }
 
-  render () {
-    if (this.#highlightsWrapper.children) this.#highlightsWrapper.innerHTML = ''
-    for (const highlight of this.#highlights.values()) this.findAndDrawHighlight(...highlight)
+  getHighlights () {
+    return [...this.#highlights.values()].map(([start, end, className]: [number, number, string | undefined]) => {
+      const range = this.highlightToRange(start, end)
+      return { start, end, className, text: range.toString() }
+    })
   }
 
-  findAndDrawHighlight (start: number, end: number, className: string | undefined) {
+  render () {
+    const needed: Array<string> = []
+    const existingIds: Array<string> = [...this.#highlightsWrapper.children]
+      .map((highlight) => (highlight as HTMLDivElement).dataset.highlight)
+      .filter(Boolean) as Array<string>
+
+    for (const [start, end, className] of this.#highlights.values()) {
+      const id = `${start}-${end}-${className}`
+
+      if (!existingIds.includes(id)) {
+        this.findAndDrawHighlight(start, end, className)
+      }
+
+      needed.push(id)
+    }
+
+    const idsToRemove = existingIds.filter((id: string) => !needed.includes(id))
+
+    for (const child of this.#highlightsWrapper.children) {
+      const id = (child as HTMLDivElement).dataset.highlight
+      if (id && idsToRemove.includes(id)) {
+        child.innerHTML = ''
+        child.remove()
+      }
+    }
+  }
+
+  highlightToRange (start: number, end: number): Range {
     const text = this.querySelector('annot-text') as Node
 
     const selection = window.getSelection()!
@@ -50,9 +79,7 @@ export class AnnotHighlight extends HTMLElement {
     const isChromium = !!(window as any).chrome
 
     const words = text.textContent!.trim().split(/ |\,|\.|\n/g)
-
     let realWordIndex = -1
-
 
     for (const word of words) {
       if (word !== '') realWordIndex++
@@ -84,10 +111,13 @@ export class AnnotHighlight extends HTMLElement {
     }
 
     const currentRange = selection.getRangeAt(0)
-
     selection.removeAllRanges()
+    return currentRange
+  }
 
-    this.drawHighlights(currentRange.getClientRects(), start, end, currentRange.toString(), className)
+  findAndDrawHighlight (start: number, end: number, className: string | undefined) {
+    const range = this.highlightToRange(start, end)
+    this.drawHighlights(range.getClientRects(), start, end, range.toString(), className)
   }
 
   drawHighlights (rects: DOMRectList, start: number, end: number, text: string, className: string | undefined) {
@@ -106,6 +136,7 @@ export class AnnotHighlight extends HTMLElement {
 
       const highlightHover = document.createElement('div')
       highlightHover.classList.add('highlight-hover')
+      highlightWrapper.dataset.highlight = `${start}-${end}-${className}`
       highlightWrapper.appendChild(highlightHover)
 
       const marginTop = ownRect.top
@@ -115,7 +146,6 @@ export class AnnotHighlight extends HTMLElement {
       highlight.style.left = rect.x - marginLeft + 'px'
       highlight.style.height = rect.height + 'px'
       highlight.style.width = rect.width + 'px'
-
 
       highlightHover.style.top = rect.y - marginTop + 'px'
       highlightHover.style.left = rect.x - marginLeft + 'px'

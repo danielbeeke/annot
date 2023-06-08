@@ -7,6 +7,11 @@ import type { AnnotHighlight } from '../lib/AnnotHighlight'
 const annotText = document.querySelector('annot-text')! as AnnotText
 const annotHighlight = document.querySelector('annot-highlight')! as AnnotHighlight
 
+if (location.hash === '#add-fixtures') {
+  annotHighlight.addHighlight(2, 3, 'test1')
+  annotHighlight.addHighlight(5, 5, 'test2')
+}
+
 annotHighlight.addEventListener('click-highlight', (event: any) => {
   alert(event.detail.text)
 })
@@ -20,3 +25,8 @@ annotText.addEventListener('selection', (event: any) => {
   annotHighlight.addHighlight(start, end)
   annotText.clearCursors()
 })
+
+const highlights = annotHighlight.getHighlights()
+for (const highlight of highlights) {
+  console.log(highlight)
+}

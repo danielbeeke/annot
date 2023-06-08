@@ -31,6 +31,7 @@ annot-highlight {
     padding: var(--paddingV) var(--paddingH);
     transform: translate(var(--negativePaddingH), var(--negativePaddingV));
     background-color: rgb(226, 185, 185);
+    animation: slideIn .3s ease-in-out forwards;
   }
 
   .highlight-hover {
@@ -66,4 +67,9 @@ annot-highlight {
       }
     }
   }
+}
+
+@keyframes slideIn {
+  0% { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0); }
 }
