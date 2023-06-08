@@ -44,6 +44,9 @@ export class AnnotCursor extends HTMLElement {
     this.#offset = this.#selection?.anchorOffset
     this.#node = this.#selection?.anchorNode
 
+    // Edge case triggered by Cypress
+    if (!this.#selection!.rangeCount) return 
+
     const range = this.#selection!.getRangeAt(0)
     const { top, left } = range.getBoundingClientRect()
     const { marginLeft, marginTop } = getCorrection(this)
