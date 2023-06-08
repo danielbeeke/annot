@@ -1,3 +1,5 @@
+import * as _ from 'lodash-es'
+
 export class AnnotHighlight extends HTMLElement {
 
   #highlights: Map<string, [number, number, string | undefined]> = new Map()
@@ -7,6 +9,9 @@ export class AnnotHighlight extends HTMLElement {
     super()
     this.#highlightsWrapper = document.createElement('div')
     this.#highlightsWrapper.classList.add('highlights')
+
+    const originalRender = this.render.bind(this)
+    this.render = _.debounce(originalRender, 100)
   }
 
   connectedCallback () {
@@ -32,7 +37,7 @@ export class AnnotHighlight extends HTMLElement {
 
   findAndDrawHighlight (start: number, end: number, className: string | undefined) {
     const text = this.querySelector('annot-text') as Node
-    
+
     const selection = window.getSelection()!
     selection.removeAllRanges()
 
@@ -44,9 +49,10 @@ export class AnnotHighlight extends HTMLElement {
 
     const isChromium = !!(window as any).chrome
 
-    const words = this.textContent!.trim().split(/ |\,|\./g)
+    const words = text.textContent!.trim().split(/ |\,|\.|\n/g)
 
     let realWordIndex = -1
+
 
     for (const word of words) {
       if (word !== '') realWordIndex++
