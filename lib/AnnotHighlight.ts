@@ -2,7 +2,7 @@ import * as _ from 'lodash-es'
 
 export class AnnotHighlight extends HTMLElement {
 
-  #highlights: Map<string, [number, number, string | undefined]> = new Map()
+  #highlights: Map<string, [number, number, string | undefined, string | undefined]> = new Map()
   #highlightsWrapper: HTMLDivElement
 
   constructor () {
@@ -20,8 +20,8 @@ export class AnnotHighlight extends HTMLElement {
     this.render()
   }
 
-  addHighlight (startWord: number, endWord: number, className?: string) {
-    this.#highlights.set(startWord + '-' + endWord, [startWord, endWord, className])
+  addHighlight (startWord: number, endWord: number, className?: string, color?: string) {
+    this.#highlights.set(startWord + '-' + endWord, [startWord, endWord, className, color])
     this.render()
   }
 
@@ -31,9 +31,9 @@ export class AnnotHighlight extends HTMLElement {
   }
 
   getHighlights () {
-    return [...this.#highlights.values()].map(([start, end, className]: [number, number, string | undefined]) => {
+    return [...this.#highlights.values()].map(([start, end, className, color]: [number, number, string | undefined, string | undefined]) => {
       const range = this.highlightToRange(start, end)
-      return { start, end, className, text: range.toString() }
+      return { start, end, className, color, text: range.toString() }
     })
   }
 
@@ -43,11 +43,11 @@ export class AnnotHighlight extends HTMLElement {
       .map((highlight) => (highlight as HTMLDivElement).dataset.highlight)
       .filter(Boolean) as Array<string>
 
-    for (const [start, end, className] of this.#highlights.values()) {
-      const id = `${start}-${end}-${className}`
+    for (const [start, end, className, color] of this.#highlights.values()) {
+      const id = `${start}-${end}-${className}-${color}`
 
       if (!existingIds.includes(id)) {
-        this.findAndDrawHighlight(start, end, className)
+        this.findAndDrawHighlight(start, end, className, color)
       }
 
       needed.push(id)
@@ -115,12 +115,12 @@ export class AnnotHighlight extends HTMLElement {
     return currentRange
   }
 
-  findAndDrawHighlight (start: number, end: number, className: string | undefined) {
+  findAndDrawHighlight (start: number, end: number, className: string | undefined, color: string | undefined) {
     const range = this.highlightToRange(start, end)
-    this.drawHighlights(range.getClientRects(), start, end, range.toString(), className)
+    this.drawHighlights(range.getClientRects(), start, end, range.toString(), className, color)
   }
 
-  drawHighlights (rects: DOMRectList, start: number, end: number, text: string, className: string | undefined) {
+  drawHighlights (rects: DOMRectList, start: number, end: number, text: string, className?: string | undefined, color?: string | undefined) {
     const ownRect = this.getBoundingClientRect()
     const rectsArray = [...rects]
 
@@ -132,11 +132,12 @@ export class AnnotHighlight extends HTMLElement {
       const highlight = document.createElement('div')
       highlight.classList.add('highlight')
       if (className) highlight.classList.add(className)
+      if (color) highlight.style.backgroundColor = color
       highlightWrapper.appendChild(highlight)
 
       const highlightHover = document.createElement('div')
       highlightHover.classList.add('highlight-hover')
-      highlightWrapper.dataset.highlight = `${start}-${end}-${className}`
+      highlightWrapper.dataset.highlight = `${start}-${end}-${className}-${color}`
       highlightWrapper.appendChild(highlightHover)
 
       const marginTop = ownRect.top

@@ -32,6 +32,10 @@ annot-highlight {
     transform: translate(var(--negativePaddingH), var(--negativePaddingV));
     background-color: rgb(226, 185, 185);
     animation: slideIn .3s ease-in-out forwards;
+
+    &.removed {
+      animation: fadeOut .3s ease-in-out forwards;
+    }
   }
 
   .highlight-hover {
@@ -42,6 +46,7 @@ annot-highlight {
 
   .highlight-group {
     .remove-button {
+      animation: fadeIn .3s .3s ease-in-out backwards;
       opacity: 0;
       cursor: pointer;
       position: absolute;
@@ -72,4 +77,14 @@ annot-highlight {
 @keyframes slideIn {
   0% { clip-path: inset(0 100% 0 0); }
   100% { clip-path: inset(0); }
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
