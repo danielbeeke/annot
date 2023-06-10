@@ -8,8 +8,9 @@ const annotText = document.querySelector('annot-text')! as AnnotText
 const annotHighlight = document.querySelector('annot-highlight')! as AnnotHighlight
 
 if (location.hash === '#add-fixtures') {
-  annotHighlight.addHighlight(2, 3, 'test1')
-  annotHighlight.addHighlight(5, 5, 'test2')
+  annotHighlight.addHighlight(0, 2, 'test1')
+  // annotHighlight.addHighlight(2, 3, 'test1')
+  // annotHighlight.addHighlight(5, 5, 'test2')
 }
 
 annotHighlight.addEventListener('click-highlight', (event: any) => {

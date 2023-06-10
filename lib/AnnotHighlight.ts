@@ -75,11 +75,12 @@ export class AnnotHighlight extends HTMLElement {
     range.setEnd(text, 0)
 
     selection.addRange(range)
-
     const isChromium = !!(window as any).chrome
 
     const words = text.textContent!.trim().split(/ |\,|\.|\n/g)
     let realWordIndex = -1
+
+    // debugger
 
     for (const word of words) {
       if (word !== '') realWordIndex++
@@ -97,8 +98,8 @@ export class AnnotHighlight extends HTMLElement {
       if (word !== '') realWordIndex++
       if (realWordIndex < start - 1) continue
       if (word === '' && !isChromium) continue
-      if (realWordIndex === end) break
       selection.modify('extend', 'forward', 'word')
+      if (realWordIndex === end) break
     }
 
     const testRange = selection.getRangeAt(0)
