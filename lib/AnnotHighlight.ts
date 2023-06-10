@@ -92,14 +92,14 @@ export class AnnotHighlight extends HTMLElement {
     selection.modify('move', 'forward', 'word')    
     selection.modify('move', 'backward', 'word')
 
-    realWordIndex = -1
+    realWordIndex = -2
 
     for (const word of words) {
       if (word !== '') realWordIndex++
       if (realWordIndex < start - 1) continue
       if (word === '' && !isChromium) continue
-      selection.modify('extend', 'forward', 'word')
       if (realWordIndex === end) break
+      selection.modify('extend', 'forward', 'word')
     }
 
     const testRange = selection.getRangeAt(0)
