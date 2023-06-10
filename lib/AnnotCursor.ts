@@ -49,9 +49,14 @@ export class AnnotCursor extends HTMLElement {
 
     const range = this.#selection!.getRangeAt(0)
     const { top, left } = range.getBoundingClientRect()
-    const { marginLeft, marginTop } = getCorrection(this)
-    this.style.top = top - marginTop + 'px'
-    this.style.left = left - marginLeft + 'px'
+
+    const ownRect = this.closest('annot-text')!.getBoundingClientRect()
+
+    const ownMarginTop = ownRect.top
+    const ownMarginLeft = ownRect.left
+
+    this.style.top = top - ownMarginTop + 'px'
+    this.style.left = left - ownMarginLeft + 'px'
   }
 }
 

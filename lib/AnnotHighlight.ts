@@ -1,9 +1,10 @@
-import * as _ from 'lodash-es'
-import { iterateNode } from './helpers/iterateNode'
+import debounce from 'lodash-es/debounce'
+
+type Highlight = [number, number, boolean | undefined, string | undefined, string | undefined]
 
 export class AnnotHighlight extends HTMLElement {
 
-  #highlights: Map<string, [number, number, string | undefined, string | undefined]> = new Map()
+  #highlights: Map<string, Highlight> = new Map()
   #highlightsWrapper: HTMLDivElement
 
   constructor () {
@@ -12,7 +13,7 @@ export class AnnotHighlight extends HTMLElement {
     this.#highlightsWrapper.classList.add('highlights')
 
     const originalRender = this.render.bind(this)
-    this.render = _.debounce(originalRender, 40)
+    this.render = debounce(originalRender, 40)
   }
 
   connectedCallback () {
@@ -21,8 +22,8 @@ export class AnnotHighlight extends HTMLElement {
     this.render()
   }
 
-  addHighlight (startWord: number, endWord: number, className?: string, color?: string) {
-    this.#highlights.set(startWord + '-' + endWord, [startWord, endWord, className, color])
+  addHighlight (startWord: number, endWord: number, removable?: boolean, className?: string, color?: string) {
+    this.#highlights.set(startWord + '-' + endWord, [startWord, endWord, removable, className, color])
     this.render()
   }
 
@@ -32,9 +33,9 @@ export class AnnotHighlight extends HTMLElement {
   }
 
   getHighlights () {
-    return [...this.#highlights.values()].map(([start, end, className, color]: [number, number, string | undefined, string | undefined]) => {
+    return [...this.#highlights.values()].map(([start, end, removable, className, color]: Highlight) => {
       const range = this.highlightToRange(start, end)
-      return { start, end, className, color, text: range.toString() }
+      return { start, end, className, color, removable, text: range.toString() }
     })
   }
 
@@ -44,11 +45,11 @@ export class AnnotHighlight extends HTMLElement {
       .map((highlight) => (highlight as HTMLDivElement).dataset.highlight)
       .filter(Boolean) as Array<string>
 
-    for (const [start, end, className, color] of this.#highlights.values()) {
+    for (const [start, end, removable, className, color] of this.#highlights.values()) {
       const id = `${start}-${end}-${className}-${color}`
 
       if (!existingIds.includes(id)) {
-        this.findAndDrawHighlight(start, end, className, color)
+        this.findAndDrawHighlight(start, end, removable, className, color)
       }
 
       needed.push(id)
@@ -80,8 +81,6 @@ export class AnnotHighlight extends HTMLElement {
 
     const words = text.textContent!.trim().split(/ |\,|\.|\n/g)
     let realWordIndex = -1
-
-    // debugger
 
     for (const word of words) {
       if (word !== '') realWordIndex++
@@ -117,13 +116,13 @@ export class AnnotHighlight extends HTMLElement {
     return currentRange
   }
 
-  findAndDrawHighlight (start: number, end: number, className: string | undefined, color: string | undefined) {
+  findAndDrawHighlight (start: number, end: number, removable?: boolean, className?: string | undefined, color?: string | undefined) {
     const range = this.highlightToRange(start, end)
     const rects = [...range.getClientRects()].filter(rect => rect.width)
-    this.drawHighlights(rects, start, end, range.toString(), className, color)
+    this.drawHighlights(rects, start, end, range.toString(), removable, className, color)
   }
 
-  drawHighlights (rectsArray: Array<DOMRect>, start: number, end: number, text: string, className?: string | undefined, color?: string | undefined) {
+  drawHighlights (rectsArray: Array<DOMRect>, start: number, end: number, text: string, removable?: boolean, className?: string | undefined, color?: string | undefined) {
     const ownRect = this.getBoundingClientRect()
 
     const highlightWrapper = document.createElement('div')
@@ -170,19 +169,22 @@ export class AnnotHighlight extends HTMLElement {
         detail: { element: highlight, type, start, end }
       }))
 
-      const isRemovable = this.getAttribute('removable') !== null
-      if (isRemovable && type === 'end') this.addRemoveButton(highlight, start, end)
+      if (removable && type === 'end') this.addRemoveButton(highlight, rect, start, end)
     }
   }
 
-  addRemoveButton (element: HTMLDivElement, start: number, end: number) {
+  addRemoveButton (element: HTMLDivElement, rect: DOMRect, start: number, end: number) {
+    const ownRect = this.getBoundingClientRect()
+
     const removeButton = document.createElement('button')
     removeButton.innerHTML = 'x'
     removeButton.classList.add('remove-button')
-    const rect = element.getBoundingClientRect()
 
-    removeButton.style.top = rect.y + 'px'
-    removeButton.style.left = rect.x + rect.width + 'px'
+    const marginTop = ownRect.top
+    const marginLeft = ownRect.left
+
+    removeButton.style.top = rect.y - marginTop + 'px'
+    removeButton.style.left = rect.x + rect.width - marginLeft + 'px'
 
     element.parentElement!.appendChild(removeButton)
 

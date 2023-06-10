@@ -11,10 +11,11 @@ export class AnnotText extends HTMLElement {
   #endCursor: AnnotCursor | undefined
 
   async connectedCallback () {
-    this.addEventListener('click', () => {
+    this.addEventListener('click', (event: any) => {
+      const lineHeight = parseInt(window.getComputedStyle(event.target).lineHeight)
       if (this.#startCursor && !this.#endCursor) {
         if (this.#endCursor) this.removeCursor('end')
-        this.#endCursor = this.createCursor('end')
+        this.#endCursor = this.createCursor('end', lineHeight)
 
         const { start, end, sentence } = this.cursorsToSpanInformation()
         const event = new CustomEvent('selection', { detail: { 
@@ -27,7 +28,7 @@ export class AnnotText extends HTMLElement {
       else {
         if (this.#startCursor) this.removeCursor('start')
         if (this.#endCursor) this.removeCursor('end')
-        this.#startCursor = this.createCursor('start')
+        this.#startCursor = this.createCursor('start', lineHeight)
       }
     })
   }
@@ -90,9 +91,10 @@ export class AnnotText extends HTMLElement {
     return { start: start, end, sentence }
   }
 
-  createCursor (type: 'start' | 'end') {
+  createCursor (type: 'start' | 'end', height: number) {
     const cursor = document.createElement('annot-cursor') as AnnotCursor
     cursor.setAttribute('type', type)
+    cursor.setAttribute('style', `--lineHeight: ${height}px;`)
     this.appendChild(cursor)
     return cursor
   }

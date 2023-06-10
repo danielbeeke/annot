@@ -6,8 +6,8 @@ annot-text {
 annot-cursor {
   position: absolute;
   display: block;
-  height: 30px;
-  transform: translate(-50%, -50%);
+  height: var(--lineHeight);
+  transform: translate(-50%, -4px);
   border-left: 3px solid rgb(124, 124, 201);
 }
 
@@ -50,7 +50,7 @@ annot-highlight {
       opacity: 0;
       cursor: pointer;
       position: absolute;
-      transform: translate(-100%, -100%);
+      transform: translate(-50%, -50%);
       z-index: 1000;
       display: block;
       border: none;
