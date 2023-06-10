@@ -8,9 +8,8 @@ const annotText = document.querySelector('annot-text')! as AnnotText
 const annotHighlight = document.querySelector('annot-highlight')! as AnnotHighlight
 
 if (location.hash === '#add-fixtures') {
-  annotHighlight.addHighlight(0, 2, 'test1')
-  // annotHighlight.addHighlight(2, 3, 'test1')
-  // annotHighlight.addHighlight(5, 5, 'test2')
+  annotHighlight.addHighlight(2, 3, 'test1')
+  annotHighlight.addHighlight(5, 5, 'test2')
 }
 
 annotHighlight.addEventListener('click-highlight', (event: any) => {
@@ -20,6 +19,11 @@ annotHighlight.addEventListener('click-highlight', (event: any) => {
 annotText.addEventListener('selection', (event: any) => {
   const start = event.detail.start
   const end = event.detail.end
+
+  const startChapter = parseInt(event.detail.startNode.parentElement.closest('[chapter]').getAttribute('chapter'))
+  const endChapter = parseInt(event.detail.endNode.parentElement.closest('[chapter]').getAttribute('chapter'))
+
+  console.log(startChapter, endChapter)
 
   const colorDialog = document.getElementById('colorDialog')! as any
   const color = colorDialog.querySelector('#color')

@@ -17,7 +17,10 @@ export class AnnotText extends HTMLElement {
         this.#endCursor = this.createCursor('end')
 
         const { start, end, sentence } = this.cursorsToSpanInformation()
-        const event = new CustomEvent('selection', { detail: { start, end, sentence }})
+        const event = new CustomEvent('selection', { detail: { 
+          start, end, sentence, 
+          startNode: this.#startCursor.node, 
+          endNode: this.#endCursor.node }})
         
         this.dispatchEvent(event)
       } 

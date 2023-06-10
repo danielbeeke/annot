@@ -1,4 +1,5 @@
 import * as _ from 'lodash-es'
+import { iterateNode } from './helpers/iterateNode'
 
 export class AnnotHighlight extends HTMLElement {
 
@@ -118,12 +119,12 @@ export class AnnotHighlight extends HTMLElement {
 
   findAndDrawHighlight (start: number, end: number, className: string | undefined, color: string | undefined) {
     const range = this.highlightToRange(start, end)
-    this.drawHighlights(range.getClientRects(), start, end, range.toString(), className, color)
+    const rects = [...range.getClientRects()].filter(rect => rect.width)
+    this.drawHighlights(rects, start, end, range.toString(), className, color)
   }
 
-  drawHighlights (rects: DOMRectList, start: number, end: number, text: string, className?: string | undefined, color?: string | undefined) {
+  drawHighlights (rectsArray: Array<DOMRect>, start: number, end: number, text: string, className?: string | undefined, color?: string | undefined) {
     const ownRect = this.getBoundingClientRect()
-    const rectsArray = [...rects]
 
     const highlightWrapper = document.createElement('div')
     highlightWrapper.classList.add('highlight-group')
