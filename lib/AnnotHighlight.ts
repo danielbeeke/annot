@@ -122,12 +122,15 @@ export class AnnotHighlight extends HTMLElement {
     let endIsSet = false
 
     while (node) {
-      const words = node.textContent!.trim().split(' ')
+      const words = node.textContent!.split(' ')
 
       let index = 0
       for (const word of words) {
-        if (word.replace(/\W/g, '')) wordPositions.set(wordPositions.size, { node, word, index })
+        if (word.replace(/\W/g, '')) {
+          wordPositions.set(wordPositions.size, { node, word, index })
+        }
         index += word.length + 1
+        console.log(`'${word}'`)
       }
 
       // If we have added the word that is the start
