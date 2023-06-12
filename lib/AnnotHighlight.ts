@@ -109,37 +109,44 @@ export class AnnotHighlight extends HTMLElement {
 
   highlightToRange (start: number, end: number): Range {
     const text = this.querySelector('annot-text')!
-
     const range = new Range()
-
-    const selection = window.getSelection()!
-    selection.addRange(range)
+    // const selection = window.getSelection()!
+    // selection.addRange(range)
 
     const iterator = document.createNodeIterator(text, NodeFilter.SHOW_TEXT)
     let node = iterator.nextNode()
 
     const wordPositions: Map<number, any> = new Map()
 
+    let startIsSet = false
+    let endIsSet = false
+
     while (node) {
       const words = node.textContent!.trim().split(' ')
-      
+
       let index = 0
       for (const word of words) {
-        if (word) wordPositions.set(wordPositions.size, { node, word, index })
+        if (word.replace(/\W/g, '')) wordPositions.set(wordPositions.size, { node, word, index })
         index += word.length + 1
       }
+
+      // If we have added the word that is the start
+      if (!startIsSet && wordPositions.has(start)) {
+        const { node: startNode, word: startWord, index: startIndex } = wordPositions.get(start)
+        range.setStart(startNode, startIndex)
+        startIsSet = true
+      }
+
+      // If we have added the word that is the end
+      if (!endIsSet && wordPositions.has(end)) {
+        const { node: endNode, word: endWord, index: endIndex } = wordPositions.get(end)
+        range.setEnd(endNode, endIndex + endWord.replace(/\W/g, '').length)
+        endIsSet = true
+      }
   
-      node = iterator.nextNode()
+      node = startIsSet && endIsSet ? null : iterator.nextNode()
     }
 
-    const { node: startNode, word: startWord, index: startIndex } = wordPositions.get(start)
-    const { node: endNode, word: endWord, index: endIndex } = wordPositions.get(end)
-
-    range.setStart(startNode, startIndex)
-    range.setEnd(endNode, endIndex + endWord.replace(/\W/g, '').length)
-
-    console.log(startNode, startIndex, endNode, endIndex)
-    
     return range
   }
 
