@@ -1,5 +1,4 @@
-import '../lib/AnnotText'
-import '../lib/AnnotHighlight'
+import '../dist/annot'
 
 import type { AnnotText } from '../lib/AnnotText'
 import type { AnnotHighlight } from '../lib/AnnotHighlight'

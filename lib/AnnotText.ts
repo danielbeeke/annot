@@ -1,6 +1,5 @@
 import type { AnnotCursor } from './AnnotCursor'
 import './AnnotCursor'
-import './style.scss'
 
 const SPLIT = / |\n|\,|\./g
 
