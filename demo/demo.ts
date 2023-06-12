@@ -20,10 +20,10 @@ annotText.addEventListener('selection', (event: any) => {
   const start = event.detail.start
   const end = event.detail.end
 
-  const startChapter = parseInt(event.detail.startNode.parentElement.closest('[chapter]').getAttribute('chapter'))
-  const endChapter = parseInt(event.detail.endNode.parentElement.closest('[chapter]').getAttribute('chapter'))
+  // const startChapter = parseInt(event.detail.startNode.parentElement.closest('[chapter]').getAttribute('chapter'))
+  // const endChapter = parseInt(event.detail.endNode.parentElement.closest('[chapter]').getAttribute('chapter'))
 
-  console.log(startChapter, endChapter)
+  // console.log(startChapter, endChapter)
 
   const colorDialog = document.getElementById('colorDialog')! as any
   const color = colorDialog.querySelector('#color')
@@ -41,7 +41,7 @@ annotText.addEventListener('selection', (event: any) => {
     chosenColor = color.value
     colorDialog.close()
 
-    annotHighlight.addHighlight(start, end, undefined, chosenColor)
+    annotHighlight.addHighlight(start, end, true, undefined, chosenColor)
     annotText.clearCursors()
     colorDialog.removeEventListener('close', close, { once: true })
   }

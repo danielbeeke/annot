@@ -1,4 +1,5 @@
 import debounce from 'lodash-es/debounce'
+import { iterateNode } from './helpers/iterateNode'
 
 type Highlight = [number, number, boolean | undefined, string | undefined, string | undefined]
 
@@ -35,7 +36,7 @@ export class AnnotHighlight extends HTMLElement {
   getHighlights () {
     return [...this.#highlights.values()].map(([start, end, removable, className, color]: Highlight) => {
       const range = this.highlightToRange(start, end)
-      return { start, end, className, color, removable, text: range.toString() }
+      return { start, end, className, color, removable, text: range.toString().trim() }
     })
   }
 
@@ -66,54 +67,80 @@ export class AnnotHighlight extends HTMLElement {
     }
   }
 
-  highlightToRange (start: number, end: number): Range {
-    const text = this.querySelector('annot-text') as Node
+  highlightToRange1 (start: number, end: number): Range {
+    const text = this.querySelector('annot-text')!
+    const words = text.textContent!.trim().split(' ')
+    const wordPositions: Set<number> = new Set()
 
-    const selection = window.getSelection()!
-    selection.removeAllRanges()
+    let counter = 0
+    for (const word of words) {
+      if (word && !['\n'].includes(word)) wordPositions.add(counter)
+      if (!['\n'].includes(word)) counter += word.length + 1
+    }
+
+    const wordKeys: Array<number> = [...wordPositions.values()]
+
+    const startCharacter = wordKeys[start]
+    const endCharacter = wordKeys[end + 1] - 1
 
     const range = new Range()
     range.setStart(text, 0)
     range.setEnd(text, 0)
 
+    console.log(startCharacter, endCharacter)
+
+    const selection = window.getSelection()!
     selection.addRange(range)
-    const isChromium = !!(window as any).chrome
 
-    const words = text.textContent!.trim().split(/ |\,|\.|\n/g)
-    let realWordIndex = -1
-
-    for (const word of words) {
-      if (word !== '') realWordIndex++
-      if (word === '' && !isChromium) continue
-      if (realWordIndex === start) break
-      selection.modify('move', 'forward', 'word')
+    for (let i = 0; i <= startCharacter; i++) {
+      selection.modify('move', 'forward', 'character')
     }
 
-    selection.modify('move', 'forward', 'word')    
-    selection.modify('move', 'backward', 'word')
-
-    realWordIndex = -2
-
-    for (const word of words) {
-      if (word !== '') realWordIndex++
-      if (realWordIndex < start - 1) continue
-      if (word === '' && !isChromium) continue
-      if (realWordIndex === end) break
-      selection.modify('extend', 'forward', 'word')
+    for (let i = startCharacter; i <= endCharacter; i++) {
+      selection.modify('extend', 'forward', 'character')
     }
 
-    const testRange = selection.getRangeAt(0)
-    const testRangeText = testRange.toString();
 
-    const isLetter = /^[a-z]/i.test(testRangeText[testRangeText.length - 1])
+    // // selection.removeAllRanges()
 
-    if (!isLetter) {
-      selection.modify('extend', 'backward', 'character')    
+    return range
+  }
+
+
+  highlightToRange (start: number, end: number): Range {
+    const text = this.querySelector('annot-text')!
+
+    const range = new Range()
+
+    const selection = window.getSelection()!
+    selection.addRange(range)
+
+    const iterator = document.createNodeIterator(text, NodeFilter.SHOW_TEXT)
+    let node = iterator.nextNode()
+
+    const wordPositions: Map<number, any> = new Map()
+
+    while (node) {
+      const words = node.textContent!.trim().split(' ')
+      
+      let index = 0
+      for (const word of words) {
+        if (word) wordPositions.set(wordPositions.size, { node, word, index })
+        index += word.length + 1
+      }
+  
+      node = iterator.nextNode()
     }
 
-    const currentRange = selection.getRangeAt(0)
-    selection.removeAllRanges()
-    return currentRange
+    const { node: startNode, word: startWord, index: startIndex } = wordPositions.get(start)
+    const { node: endNode, word: endWord, index: endIndex } = wordPositions.get(end)
+
+    range.setStart(startNode, startIndex)
+    range.setEnd(endNode, endIndex + endWord.replace(/\W/g, '').length)
+
+    console.log(startNode, startIndex, endNode, endIndex)
+    
+    return range
   }
 
   findAndDrawHighlight (start: number, end: number, removable?: boolean, className?: string | undefined, color?: string | undefined) {
