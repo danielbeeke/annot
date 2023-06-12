@@ -1,5 +1,4 @@
 import debounce from 'lodash-es/debounce'
-import { iterateNode } from './helpers/iterateNode'
 
 type Highlight = [number, number, boolean | undefined, string | undefined, string | undefined]
 
@@ -67,51 +66,9 @@ export class AnnotHighlight extends HTMLElement {
     }
   }
 
-  highlightToRange1 (start: number, end: number): Range {
-    const text = this.querySelector('annot-text')!
-    const words = text.textContent!.trim().split(' ')
-    const wordPositions: Set<number> = new Set()
-
-    let counter = 0
-    for (const word of words) {
-      if (word && !['\n'].includes(word)) wordPositions.add(counter)
-      if (!['\n'].includes(word)) counter += word.length + 1
-    }
-
-    const wordKeys: Array<number> = [...wordPositions.values()]
-
-    const startCharacter = wordKeys[start]
-    const endCharacter = wordKeys[end + 1] - 1
-
-    const range = new Range()
-    range.setStart(text, 0)
-    range.setEnd(text, 0)
-
-    console.log(startCharacter, endCharacter)
-
-    const selection = window.getSelection()!
-    selection.addRange(range)
-
-    for (let i = 0; i <= startCharacter; i++) {
-      selection.modify('move', 'forward', 'character')
-    }
-
-    for (let i = startCharacter; i <= endCharacter; i++) {
-      selection.modify('extend', 'forward', 'character')
-    }
-
-
-    // // selection.removeAllRanges()
-
-    return range
-  }
-
-
   highlightToRange (start: number, end: number): Range {
     const text = this.querySelector('annot-text')!
     const range = new Range()
-    // const selection = window.getSelection()!
-    // selection.addRange(range)
 
     const iterator = document.createNodeIterator(text, NodeFilter.SHOW_TEXT)
     let node = iterator.nextNode()
@@ -130,12 +87,11 @@ export class AnnotHighlight extends HTMLElement {
           wordPositions.set(wordPositions.size, { node, word, index })
         }
         index += word.length + 1
-        console.log(`'${word}'`)
       }
 
       // If we have added the word that is the start
       if (!startIsSet && wordPositions.has(start)) {
-        const { node: startNode, word: startWord, index: startIndex } = wordPositions.get(start)
+        const { node: startNode, index: startIndex } = wordPositions.get(start)
         range.setStart(startNode, startIndex)
         startIsSet = true
       }

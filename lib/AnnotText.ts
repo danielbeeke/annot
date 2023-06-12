@@ -1,7 +1,6 @@
 import type { AnnotCursor } from './AnnotCursor'
 import './AnnotCursor'
 import './style.scss'
-import { iterateNode } from './helpers/iterateNode'
 
 const SPLIT = / |\n|\,|\./g
 
@@ -34,8 +33,9 @@ export class AnnotText extends HTMLElement {
   }
 
   cursorsToSpanInformation () {
-    const iterator = iterateNode(this)
-    let result = iterator.next()
+    const iterator = document.createNodeIterator(this, NodeFilter.SHOW_TEXT)
+
+    let node = iterator.nextNode()
     let start = 0
     let end = 0
 
@@ -47,16 +47,16 @@ export class AnnotText extends HTMLElement {
 
     let sentence: string = ''
 
-    while (!result.done) {
+    while (node) {
 
       // Words before the start cursor, counting for 'start'
-      if (result.value !== this.#startCursor.node && !encounteredStartNode) {
-        const chunkWords = result.value.textContent!.split(SPLIT).filter(Boolean)
+      if (node !== this.#startCursor.node && !encounteredStartNode) {
+        const chunkWords = node.textContent!.split(SPLIT).filter(Boolean)
         start += chunkWords.length
       }
 
       // Counting words before the offset, this chunk does contain the text but might not start with it.
-      if (result.value === this.#startCursor.node && !encounteredStartNode) {
+      if (node === this.#startCursor.node && !encounteredStartNode) {
         const chunkWords = this.#startCursor.node.textContent.substring(0, this.#startCursor.offset)!.split(SPLIT).filter(Boolean)
 
         const end = this.#startCursor.node === this.#endCursor.node ? 
@@ -70,13 +70,13 @@ export class AnnotText extends HTMLElement {
       }
 
       // If we are in a chunk in the middle, add it to the sentence
-      if (result.value !== this.#startCursor.node && result.value !== this.#endCursor.node && encounteredStartNode && !encounteredEndNode) {
-        sentence += result.value.textContent!
+      if (node !== this.#startCursor.node && node !== this.#endCursor.node && encounteredStartNode && !encounteredEndNode) {
+        sentence += node.textContent!
       }
 
       // If we are at the end.
-      if (result.value === this.#endCursor.node) {
-        if (result.value !== this.#startCursor.node) {
+      if (node === this.#endCursor.node) {
+        if (node !== this.#startCursor.node) {
           sentence += this.#endCursor.node.textContent.substring(0, this.#endCursor.offset)  
         }
 
@@ -85,7 +85,7 @@ export class AnnotText extends HTMLElement {
         encounteredEndNode = true
       }
 
-      result = iterator.next()
+      node = iterator.nextNode()
     }
 
     return { start: start, end, sentence }

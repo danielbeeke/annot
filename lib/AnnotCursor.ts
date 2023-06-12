@@ -1,5 +1,3 @@
-import { getCorrection } from './helpers/getCorrection'
-
 export class AnnotCursor extends HTMLElement {
 
   #selection: Selection | undefined | null
