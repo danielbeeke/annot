@@ -18,7 +18,11 @@ export class AnnotHighlight extends HTMLElement {
 
   connectedCallback () {
     this.insertAdjacentElement('afterbegin', this.#highlightsWrapper)
-    window.addEventListener('resize', () => this.render())
+    window.addEventListener('resize', () => {
+      this.#highlightsWrapper.innerHTML = ''
+      console.log('test')
+      this.render()
+    })
     this.render()
   }
 
