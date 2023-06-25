@@ -6,9 +6,9 @@ annot-text {
 annot-cursor {
   position: absolute;
   display: block;
-  height: var(--lineHeight);
-  transform: translate(-50%, -4px);
-  border-left: 3px solid rgb(124, 124, 201);
+  padding-block: 8px;
+  transform: translate(-50%, -8px);
+  border-left: 3px solid rgb(214, 39, 162);
 }
 
 annot-highlight {
